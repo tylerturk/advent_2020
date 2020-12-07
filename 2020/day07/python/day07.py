@@ -1,31 +1,15 @@
 bag_structure = {}
 
-filename = "../day07.txt"
-# filename = "../day07.txt"
-# Example relationship:
-# {
-#     "light red": {
-#         "children": {
-#             "bright white": 1,
-#             "muted yellow": 2
-#         },
-#         "kiddos": [
-#             "bright white",
-#             "muted yellow",
-#             "muted yellow",
-#         ]
-#         "parents": {}
-# }
-
 def ensure_bag_in_structure(bag):
     if bag not in bag_structure:
         bag_structure[bag] = {
+            "name": bag,
             "children": {},
             "kiddos": [],
             "parents": []
         }
 
-with open("../sample.txt", "r") as fh:
+with open("../day07.txt", "r") as fh:
     # Determine bag structuring
     for line in fh.readlines():
         line = line.replace("bags ", "").replace("bag ", "").replace(".", "").strip()
@@ -41,8 +25,6 @@ with open("../sample.txt", "r") as fh:
             bag_structure[parent_bag]["kiddos"].extend([bag_type]*int(count))
             ensure_bag_in_structure(bag_type)
             bag_structure[bag_type]["parents"].append(parent_bag)
-import sys
-sys.setrecursionlimit(5000000)
 
 bag_to_find = "shiny gold"
 parents = []
@@ -53,15 +35,22 @@ for parent in parents:
         if parent_parent not in parents:
             parents.append(parent_parent)
 
-def recursive_sum_children(input_list):
-    if input_list == []:
-        return 0
-    else:
-        head = input_list[0]
-        smaller_list = input_list[1:]
-        smaller_list.extend(bag_structure[head]["kiddos"])
-        return len(bag_structure[head]["kiddos"]) + recursive_sum_children(smaller_list)
+def recursive_create(bag):
+    local_bag = {}
+    for bag_keys in bag.keys():
+        for child in bag_structure[bag_keys]["children"].keys():
+            bag[bag_keys][child] = {}
+            recursive_create(bag[bag_keys])
+    return bag
 
+def count_bags(bag_obj, parent):
+    keys = bag_obj.keys()
+    local = 0
+    for key in keys:
+        local += (1 + count_bags(bag_obj[key], key)) * bag_structure[parent]["children"][key]
+    return local
+
+bag_obj = recursive_create({bag_to_find: {}})
 
 print("Number possible parent bags", len(parents))
-print("Total number of required child bags", recursive_sum_children(bag_structure[bag_to_find]["kiddos"]) + len(bag_structure[bag_to_find]["kiddos"]))
+print("Total number of required child bags", count_bags(bag_obj[bag_to_find], bag_to_find))
