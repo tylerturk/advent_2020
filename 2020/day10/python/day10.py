@@ -42,6 +42,6 @@ def walk_path(cur_num):
     cache[cur_num] = total
     return total
 
-
+print(content)
 print(len(diff_1) * (len(diff_3) + 1))
 print(walk_path(0))
