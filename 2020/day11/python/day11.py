@@ -51,22 +51,22 @@ def directionally_adjacent_seats(grid, row, col):
     directional_cache[cache_key] = seats
     return seats
 
-def check_someone_sits(grid, row, col):
-    for seat in directionally_adjacent_seats(grid, row, col):
+def check_someone_sits(grid, row, col, adjacency_method):
+    for seat in adjacency_method(grid, row, col):
         if grid[seat[0]][seat[1]] == '#':
             return False
     return True
 
-def check_someone_vacate(grid, row, col):
+def check_someone_vacate(grid, row, col, adjacency_method, max_adjacent):
     occupied = 0
-    for seat in directionally_adjacent_seats(grid, row, col):
+    for seat in adjacency_method(grid, row, col):
         if grid[seat[0]][seat[1]] == '#':
             occupied += 1
-    if occupied >= 5:
+    if occupied >= max_adjacent:
         return True
     return False
 
-def seat_change(grid):
+def seat_change(grid, max_adjacent=5, adjacency_method=directionally_adjacent_seats):
     changed = False
     seats_to_fill = []
     seats_to_vacate = []
@@ -75,9 +75,9 @@ def seat_change(grid):
     for row in grid:
         col_index = 0
         for grid_loc in grid[row_index]:
-            if grid_loc == 'L' and check_someone_sits(grid, row_index, col_index):
+            if grid_loc == 'L' and check_someone_sits(grid, row_index, col_index, adjacency_method):
                 seats_to_fill.append((row_index, col_index))
-            elif grid_loc == '#' and check_someone_vacate(grid, row_index, col_index):
+            elif grid_loc == '#' and check_someone_vacate(grid, row_index, col_index, adjacency_method, max_adjacent):
                 seats_to_vacate.append((row_index, col_index))
             col_index += 1
         row_index += 1
@@ -94,15 +94,41 @@ def print_grid(grid):
 
 print(len(cur_grid), len(cur_grid[0]))
 
-changed = True
-while changed:
-    cur_grid, changed = seat_change(cur_grid)
-    # print_grid(cur_grid)
 
-total_sitting = 0
-for row in range(0, len(cur_grid)):
-    for col in cur_grid[row]:
-        if col == '#':
-            total_sitting += 1
+def part_one(grid):
+    immediate_cache = {}
+    grid = [x.copy() for x in cur_grid]
+    changed = True
+    while changed:
+        grid, changed = seat_change(grid, 4, immediately_adjacent_seats)
+        # print_grid(cur_grid)
 
-print(total_sitting)
+    total_sitting = 0
+    for row in range(0, len(grid)):
+        for col in grid[row]:
+            if col == '#':
+                total_sitting += 1
+
+    print("Part 1: ", total_sitting)
+
+
+part_one(cur_grid.copy())
+
+
+def part_two(grid):
+    immediate_cache = {}
+    grid = [x.copy() for x in cur_grid]
+    changed = True
+    while changed:
+        grid, changed = seat_change(grid, 5, directionally_adjacent_seats)
+        # print_grid(cur_grid)
+
+    total_sitting = 0
+    for row in range(0, len(grid)):
+        for col in grid[row]:
+            if col == '#':
+                total_sitting += 1
+
+    print("Part 2: ", total_sitting)
+
+part_two(cur_grid)
