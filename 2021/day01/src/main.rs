@@ -1,5 +1,6 @@
 fn main() {
     println!("Part 1: {}", solve_part_1(aoc::input()));
+    println!("Part 2: {}", solve_part_2(aoc::input()));
 }
 
 fn solve_part_1(contents: String) -> i32 {
