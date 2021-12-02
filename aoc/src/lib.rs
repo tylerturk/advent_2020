@@ -4,7 +4,7 @@ pub fn input() -> String {
     read_file("input.txt")
 }
 
-pub fn read_file(path: &str) -> String  {
+pub fn read_file(path: &str) -> String {
     fs::read_to_string(path).unwrap()
 }
 

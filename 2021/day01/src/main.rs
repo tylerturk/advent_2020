@@ -26,7 +26,10 @@ fn solve_part_2(contents: String) -> i32 {
     let mut first = true;
     let mut prev: i32 = 0;
     let mut increases: i32 = 0;
-    let depths: Vec<i32> = contents.lines().map(|x| x.parse::<i32>().unwrap()).collect();
+    let depths: Vec<i32> = contents
+        .lines()
+        .map(|x| x.parse::<i32>().unwrap())
+        .collect();
     let num_depths = depths.len();
     for (ind, depth) in depths.clone().into_iter().enumerate() {
         if ind == num_depths - 2 {
@@ -47,12 +50,15 @@ fn solve_part_2(contents: String) -> i32 {
 }
 
 fn part_2_smart_way(contents: String) -> i32 {
-    // tl;dr: Since we're basically doing a check to see if 
+    // tl;dr: Since we're basically doing a check to see if
     // a+b+c < b+c+d, we only need to check if a < d
     let mut increases: i32 = 0;
-    let depths: Vec<i32> = contents.lines().map(|x| x.parse::<i32>().unwrap()).collect();
-    for ind in 0..depths.len() -  3 {
-        if depths.get(ind).unwrap() < depths.get(ind+3).unwrap() {
+    let depths: Vec<i32> = contents
+        .lines()
+        .map(|x| x.parse::<i32>().unwrap())
+        .collect();
+    for ind in 0..depths.len() - 3 {
+        if depths.get(ind).unwrap() < depths.get(ind + 3).unwrap() {
             increases += 1;
         }
     }
