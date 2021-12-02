@@ -1,3 +1,4 @@
 *.class
 2021/*/Cargo.lock
 2021/*/target
+.cookie
