@@ -1,6 +1,7 @@
 fn main() {
     println!("Part 1: {}", solve_part_1(aoc::input()));
     println!("Part 2: {}", solve_part_2(aoc::input()));
+    println!("Part 2: {}", part_2_smart_way(aoc::input()));
 }
 
 fn solve_part_1(contents: String) -> i32 {
@@ -45,6 +46,19 @@ fn solve_part_2(contents: String) -> i32 {
     increases
 }
 
+fn part_2_smart_way(contents: String) -> i32 {
+    // tl;dr: Since we're basically doing a check to see if 
+    // a+b+c < b+c+d, we only need to check if a < d
+    let mut increases: i32 = 0;
+    let depths: Vec<i32> = contents.lines().map(|x| x.parse::<i32>().unwrap()).collect();
+    for ind in 0..depths.len() -  3 {
+        if depths.get(ind).unwrap() < depths.get(ind+3).unwrap() {
+            increases += 1;
+        }
+    }
+    increases
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -56,6 +70,6 @@ mod tests {
 
     #[test]
     fn part_2() {
-        assert_eq!(solve_part_2(aoc::sample()), 5);
+        assert_eq!(part_2_smart_way(aoc::sample()), 5);
     }
 }
