@@ -16,8 +16,9 @@ struct BingoBoard {
 
 impl BingoBoard {
     fn mark(mut self, num_to_mark: i32) {
+        let spots = self.spots.clone();
         if self.values.contains(&num_to_mark) {
-            for (row_ind, row) in self.spots.iter().enumerate() {
+            for (row_ind, row) in spots.iter().enumerate() {
                 for (col_ind, col) in row.iter().enumerate() {
                     if col.value == num_to_mark {
                         self.spots
