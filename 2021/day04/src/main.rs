@@ -1,0 +1,161 @@
+use std::borrow::Borrow;
+use std::collections::HashMap;
+
+fn main() {
+    println!("Part 1: {}", solve_part_1(aoc::input()));
+    println!("Part 2: {}", solve_part_2(aoc::input()));
+}
+
+#[derive(Clone)]
+struct BingoBoard {
+    spots: Vec<Vec<BingoSpot>>,
+    cols_marked: HashMap<usize, i32>,
+    rows_marked: HashMap<usize, i32>,
+    values: Vec<i32>,
+}
+
+impl BingoBoard {
+    fn mark(mut self, num_to_mark: i32) {
+        if self.values.contains(&num_to_mark) {
+            for (row_ind, row) in self.spots.iter().enumerate() {
+                for (col_ind, col) in row.iter().enumerate() {
+                    if col.value == num_to_mark {
+                        self.spots
+                            .get_mut(row_ind)
+                            .unwrap()
+                            .get_mut(col_ind)
+                            .unwrap()
+                            .mark();
+                        *self.cols_marked.entry(col_ind).or_insert(0) += 1;
+                        *self.rows_marked.entry(row_ind).or_insert(0) += 1;
+                        // return self;
+                    }
+                }
+            }
+        }
+        // self
+    }
+
+    fn check_winning(&self) -> bool {
+        for (_, v) in self.cols_marked.iter() {
+            if v == &5 {
+                return true;
+            }
+        }
+        for (_, v) in self.rows_marked.iter() {
+            if v == &5 {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn sum_unmarked(&self) -> i32 {
+        let mut sum: i32 = 0;
+        for row in self.spots.iter() {
+            for col in row.iter() {
+                if !col.is_marked() {
+                    sum += col.value;
+                }
+            }
+        }
+        sum
+    }
+}
+
+#[derive(Clone, Copy)]
+struct BingoSpot {
+    value: i32,
+    marked: bool,
+}
+
+impl BingoSpot {
+    fn mark(self) -> Self {
+        BingoSpot {
+            value: self.value,
+            marked: true,
+        }
+    }
+
+    fn is_marked(self) -> bool {
+        self.marked
+    }
+}
+
+fn parse_bingo_input<'content>(contents: String) -> (Vec<i32>, Vec<BingoBoard>) {
+    let mut c = contents.lines();
+    let called_numbers: Vec<i32> = c
+        .next()
+        .unwrap()
+        .split(",")
+        .map(|x| x.parse::<i32>().unwrap())
+        .collect();
+    let mut boards: Vec<BingoBoard> = Vec::new();
+    let mut board: Vec<Vec<BingoSpot>> = Vec::new();
+    let mut values: Vec<i32> = Vec::new();
+
+    for r in c {
+        if r == "" {
+            continue;
+        }
+        let mut row: Vec<BingoSpot> = Vec::new();
+        let mut row_numbers: Vec<i32> = r
+            .split_whitespace()
+            .map(|x| x.parse::<i32>().unwrap())
+            .collect();
+        values.append(&mut row_numbers);
+        for row_number in row_numbers {
+            row.push(BingoSpot {
+                marked: false,
+                value: row_number,
+            });
+        }
+        board.push(row);
+        if board.len() == 5 {
+            let new_board = board.to_vec();
+            let new_values = values.to_vec();
+            boards.push(BingoBoard {
+                cols_marked: HashMap::new(),
+                rows_marked: HashMap::new(),
+                spots: new_board,
+                values: new_values,
+            });
+            board.clear();
+            values.clear();
+        }
+    }
+    (called_numbers, boards)
+}
+
+fn solve_part_1(contents: String) -> i32 {
+    let (numbers, mut boards) = parse_bingo_input(contents);
+    for number in numbers {
+        for board in boards.iter_mut() {
+            board.mark(number);
+            if board.check_winning() {
+                return board.sum_unmarked();
+            }
+        }
+    }
+    0
+    // *numbers.get(0).unwrap()
+}
+
+fn solve_part_2(contents: String) -> i32 {
+    todo!();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn part_1() {
+        assert_eq!(solve_part_1(aoc::sample()), 0);
+    }
+
+    #[test]
+    fn part_2() {
+        assert_eq!(solve_part_2(aoc::sample()), 0);
+    }
+}
