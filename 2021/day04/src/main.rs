@@ -14,7 +14,7 @@ struct BingoBoard {
 }
 
 impl BingoBoard {
-    fn mark(mut self, num_to_mark: i32) {
+    fn mark(&mut self, num_to_mark: i32) {
         let spots = self.spots.clone();
         if self.values.contains(&num_to_mark) {
             for (row_ind, row) in spots.iter().enumerate() {
@@ -28,12 +28,10 @@ impl BingoBoard {
                             .mark();
                         *self.cols_marked.entry(col_ind).or_insert(0) += 1;
                         *self.rows_marked.entry(row_ind).or_insert(0) += 1;
-                        // return self;
                     }
                 }
             }
         }
-        // self
     }
 
     fn check_winning(&self) -> bool {
@@ -63,18 +61,15 @@ impl BingoBoard {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct BingoSpot {
     value: i32,
     marked: bool,
 }
 
 impl BingoSpot {
-    fn mark(self) -> Self {
-        BingoSpot {
-            value: self.value,
-            marked: true,
-        }
+    fn mark(&mut self) {
+        self.marked = true;
     }
 
     fn is_marked(self) -> bool {
@@ -99,11 +94,11 @@ fn parse_bingo_input<'content>(contents: String) -> (Vec<i32>, Vec<BingoBoard>) 
             continue;
         }
         let mut row: Vec<BingoSpot> = Vec::new();
-        let mut row_numbers: Vec<i32> = r
+        let row_numbers: Vec<i32> = r
             .split_whitespace()
             .map(|x| x.parse::<i32>().unwrap())
             .collect();
-        values.append(&mut row_numbers);
+        values.append(&mut row_numbers.clone());
         for row_number in row_numbers {
             row.push(BingoSpot {
                 marked: false,
@@ -117,8 +112,8 @@ fn parse_bingo_input<'content>(contents: String) -> (Vec<i32>, Vec<BingoBoard>) 
             boards.push(BingoBoard {
                 cols_marked: HashMap::new(),
                 rows_marked: HashMap::new(),
-                spots: new_board,
-                values: new_values,
+                spots: new_board.clone(),
+                values: new_values.clone(),
             });
             board.clear();
             values.clear();
@@ -133,16 +128,36 @@ fn solve_part_1(contents: String) -> i32 {
         for board in boards.iter_mut() {
             board.mark(number);
             if board.check_winning() {
-                return board.sum_unmarked();
+                return board.sum_unmarked() * number;
             }
         }
     }
     0
-    // *numbers.get(0).unwrap()
 }
 
 fn solve_part_2(contents: String) -> i32 {
-    todo!();
+    let (numbers, mut boards) = parse_bingo_input(contents);
+    let mut last_board: Option<BingoBoard> = None;
+    let mut last_number_called: Option<i32> = None;
+    for number in numbers {
+        let mut ind_to_remove: Vec<usize> = Vec::new();
+        for (board_ind, board) in boards.iter_mut().enumerate() {
+            board.mark(number);
+            let winning: bool = board.check_winning();
+            if winning {
+                last_board = Some(board.clone());
+                last_number_called = Some(number.clone());
+                ind_to_remove.push(board_ind);
+            }
+        }
+        for ind in ind_to_remove.iter().rev() {
+            boards.remove(*ind);
+        }
+    }
+    match last_board {
+        Some(board) => board.sum_unmarked() * last_number_called.unwrap(),
+        _ => 0,
+    }
 }
 
 #[cfg(test)]
@@ -151,11 +166,11 @@ mod tests {
 
     #[test]
     fn part_1() {
-        assert_eq!(solve_part_1(aoc::sample()), 0);
+        assert_eq!(solve_part_1(aoc::sample()), 4512);
     }
 
     #[test]
     fn part_2() {
-        assert_eq!(solve_part_2(aoc::sample()), 0);
+        assert_eq!(solve_part_2(aoc::sample()), 1924);
     }
 }
