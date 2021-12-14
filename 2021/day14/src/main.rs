@@ -27,7 +27,6 @@ fn solve_part_1(contents: String) -> usize {
             continue;
         }
         if !gotten_polymer {
-            // polymer = line.clone();
             let line_len = line.len();
             let chars: Vec<char> = line.chars().collect();
             for (ind, c) in chars.iter().enumerate() {
