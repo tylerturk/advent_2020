@@ -110,6 +110,6 @@ mod tests {
 
     #[test]
     fn part_2() {
-        assert_eq!(solve_part_2(aoc::sample()), 0);
+        assert_eq!(solve_part_2(aoc::sample()), 2188189693529);
     }
 }
