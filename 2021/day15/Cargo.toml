@@ -10,5 +10,4 @@ edition = "2018"
 path = "../../aoc"
 
 [dependencies]
-cached = "0.26.2"
-maplit = "1.0.2"
+pathfinding = "0.1.10"

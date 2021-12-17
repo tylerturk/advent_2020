@@ -1,6 +1,4 @@
-use cached::proc_macro::cached;
-use cached::SizedCache;
-use std::collections::HashMap;
+use pathfinding::dijkstra;
 use std::hash::Hash;
 
 fn main() {
@@ -20,159 +18,82 @@ fn generate_map(contents: String) -> Vec<Vec<usize>> {
     grid
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-struct Coords {
-    x: usize,
-    y: usize,
-}
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct Pos(usize, usize);
 
-#[cached(
-    type = "SizedCache<String, usize>",
-    create = "{SizedCache::with_size(500)}",
-    convert = r#"{format!("{}{}", y, x) }"#
-)]
-fn walk_grid(grid: Vec<Vec<usize>>, path: &mut Vec<Coords>, y: usize, x: usize) -> usize {
-    // We know that we haven't started walking yet!
-    let height = grid.len();
-    let width = grid.get(0).unwrap().len();
-    let cur = Coords { x, y };
-    let cur_risk: usize = match cur {
-        Coords { x: 0, y: 0 } => 0,
-        _ => *grid.get(y).unwrap().get(x).unwrap(),
-    };
-    let mut path = path.clone();
-    path.push(cur.clone());
-    if x == width - 1 && y == height - 1 {
-        return cur_risk;
-    }
-    let mut risks: HashMap<&str, usize> = HashMap::new();
-
-    if x < width - 1 {
-        let next = Coords { x: x + 1, y };
-        if !path.contains(&next) {
-            risks.insert(
-                "r",
-                cur_risk + walk_grid(grid.clone(), &mut path.clone(), y, x + 1),
-            );
-        }
-    }
-    if y < height - 1 {
-        let next = Coords { x, y: y + 1 };
-        if !path.contains(&next) {
-            risks.insert(
-                "d",
-                cur_risk + walk_grid(grid.clone(), &mut path.clone(), y + 1, x),
-            );
-        }
-    }
-
-    *risks.values().min().unwrap()
-}
-
-#[cached(
-    type = "SizedCache<String, usize>",
-    create = "{SizedCache::with_size(500)}",
-    convert = r#"{format!("part2{}{}", y, x) }"#
-)]
-fn walk_grid_part_2(grid: &Vec<Vec<usize>>, path: &mut Vec<Coords>, y: usize, x: usize) -> usize {
-    // We know that we haven't started walking yet!
-    let mut path = path.clone();
-    if path.len() > 5 {
-        path = path.as_slice()[path.len() - 5..path.len()].to_vec();
-    }
-    let height = grid.len();
-    let width = grid.get(0).unwrap().len();
-    let cur = Coords { x, y };
-    let cur_risk: usize = match cur {
-        Coords { x: 0, y: 0 } => 0,
-        _ => {
-            let mut modifier: usize = 0;
-            let mut xind = x;
-            if x >= width {
-                while xind >= width {
-                    xind -= width;
-                }
-                modifier += x / width;
+impl Pos {
+    fn get_val(&self, cave: &Vec<Vec<usize>>, x: usize, y: usize) -> usize {
+        let width = cave.get(0).unwrap().len();
+        let height = cave.len();
+        let mut modifier: usize = 0;
+        let mut xind = x;
+        if x >= width {
+            while xind >= width {
+                xind -= width;
             }
-            let mut yind = y;
-            if y >= height {
-                while yind >= height {
-                    yind -= height;
-                }
-                modifier += y / height;
-            }
-            // println!(
-            //     "Actual: {},{}, transposed: {},{}, size: {},{}",
-            //     x, y, xind, yind, width, height
-            // );
-            let mut val = *grid.get(yind).unwrap().get(xind).unwrap() + modifier;
-            loop {
-                if val > 9 {
-                    val -= 9;
-                } else {
-                    break;
-                }
-            }
-            val
+            modifier += x / width;
         }
-    };
-    // let mut path = path.clone();
-    path.push(cur.clone());
-    if x == 5 * width - 1 && y == 5 * height - 1 {
-        return cur_risk;
+        let mut yind = y;
+        if y >= height {
+            while yind >= height {
+                yind -= height;
+            }
+            modifier += y / height;
+        }
+        let mut val = *cave.get(yind).unwrap().get(xind).unwrap() + modifier;
+        loop {
+            if val > 9 {
+                val -= 9;
+            } else {
+                break;
+            }
+        }
+        val
     }
-    let mut risks: HashMap<&str, usize> = HashMap::new();
 
-    if x < 5 * width - 1 {
-        let next = Coords { x: x + 1, y };
-        if !path.contains(&next) {
-            risks.insert(
-                "r",
-                cur_risk + walk_grid_part_2(grid, &mut path.clone(), y, x + 1),
-            );
+    fn neighbors(&self, cave: &Vec<Vec<usize>>) -> Vec<(Pos, usize)> {
+        let &Pos(x, y) = self;
+        let mut neighbors: Vec<(Pos, usize)> = Vec::new();
+        let width = cave.get(0).unwrap().len();
+        let height = cave.len();
+        if x > 0 {
+            neighbors.push((Pos(x - 1, y), self.get_val(cave, x - 1, y)));
         }
-    }
-    if y < 5 * height - 1 {
-        let next = Coords { x, y: y + 1 };
-        if !path.contains(&next) {
-            risks.insert(
-                "d",
-                cur_risk + walk_grid_part_2(grid, &mut path.clone(), y + 1, x),
-            );
+        if y > 0 {
+            neighbors.push((Pos(x, y - 1), self.get_val(cave, x, y - 1)));
         }
-    }
-    /*if x > 0 {
-        let next = Coords { x: x - 1, y };
-        if !path.contains(&next) {
-            risks.insert(
-                "l",
-                cur_risk + walk_grid_part_2(grid, &mut path.clone(), y, x - 1),
-            );
+        if x < 5 * width - 1 {
+            neighbors.push((Pos(x + 1, y), self.get_val(cave, x + 1, y)));
         }
-    }
-    if y > 0 {
-        let next = Coords { x, y: y - 1 };
-        if !path.contains(&next) {
-            risks.insert(
-                "u",
-                cur_risk + walk_grid_part_2(grid, &mut path.clone(), y - 1, x),
-            );
+        if y < 5 * height - 1 {
+            neighbors.push((Pos(x, y + 1), self.get_val(cave, x, y + 1)));
         }
-    }*/
-    if risks.is_empty() {
-        return 9999999999;
+        neighbors
     }
-    *risks.values().min().unwrap()
 }
 
 fn solve_part_1(contents: String) -> usize {
     let grid = generate_map(contents);
-    walk_grid(grid, &mut Vec::new(), 0, 0)
+    let width = grid.get(0).unwrap().len() - 1;
+    let height = grid.len() - 1;
+    let result = dijkstra(
+        &Pos(0, 0),
+        |p| p.neighbors(&grid),
+        |p| *p == Pos(width, height),
+    );
+    result.expect("dijkstra failed").1
 }
 
 fn solve_part_2(contents: String) -> usize {
     let grid = generate_map(contents);
-    walk_grid_part_2(&grid, &mut Vec::new(), 0, 0)
+    let width = 5 * grid.get(0).unwrap().len() - 1;
+    let height = 5 * grid.len() - 1;
+    let result = dijkstra(
+        &Pos(0, 0),
+        |p| p.neighbors(&grid),
+        |p| *p == Pos(width, height),
+    );
+    result.expect("Shit blew up").1
 }
 
 #[cfg(test)]
