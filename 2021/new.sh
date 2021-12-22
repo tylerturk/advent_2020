@@ -3,4 +3,4 @@ if [ $# -ne 1 ]; then
     exit 1
 fi
 rsync -aP template/ $1
-sed -i "s/REPLACE/$1/" $1/Cargo.toml
+sed -i.bak "s/REPLACE/$1/" $1/Cargo.toml && rm -f $1/CARGO.toml.bak
