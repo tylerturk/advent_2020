@@ -151,42 +151,42 @@ impl Packet {
     }
 
     fn solve(&mut self) {
-        for packet in &self.subpackets {
+        for packet in self.subpackets.iter_mut() {
             packet.solve();
         }
         match self.p_type {
             0 => {
-                self.solved_answer = Some(self.sum_values());
+                self.solved_value = Some(self.sum_values());
             }
             1 => {
-                self.solved_answer = Some(self.multiply_values());
+                self.solved_value = Some(self.multiply_values());
             }
             2 => {
-                self.solved_answer = Some(self.subpackets.iter().map(|p| p.value).min().unwrap());
+                self.solved_value = Some(self.subpackets.iter().map(|p| p.value).min().unwrap());
             }
             3 => {
-                self.solved_answer = Some(self.subpackets.iter().map(|p| p.value).max().unwrap());
+                self.solved_value = Some(self.subpackets.iter().map(|p| p.value).max().unwrap());
             }
             4 => {},
             5 => {
                 if self.subpackets[0].value > self.subpackets[1].value {
-                    self.solved_answer = Some(1);
+                    self.solved_value = Some(1);
                 } else {
-                    self.solved_answer = Some(0);
+                    self.solved_value = Some(0);
                 }
             }
             6 => {
                 if self.subpackets[0].value < self.subpackets[1].value {
-                    self.solved_answer = Some(1);
+                    self.solved_value = Some(1);
                 } else {
-                    self.solved_answer = Some(0);
+                    self.solved_value = Some(0);
                 }
             }
             7 => {
                 if self.subpackets[0].value == self.subpackets[1].value {
-                    self.solved_answer = Some(1);
+                    self.solved_value = Some(1);
                 } else {
-                    self.solved_answer = Some(0);
+                    self.solved_value = Some(0);
                 }
             }
             _ => panic!("Invalid packet type"),
@@ -233,7 +233,7 @@ fn solve_packet(input: String) -> Packet {
 }
 
 fn solve_part_1(contents: String) {
-    let packet = solve_packet(contents.trim().to_string());
+    let mut packet = solve_packet(contents.trim().to_string());
     packet.solve();
     println!("Part 2: {}", packet.solved_value.unwrap());
 }
@@ -253,13 +253,29 @@ mod tests {
 
     #[test]
     fn part_2() {
-        assert_eq!(solve_packet("C200B40A82".to_string()).solve(), 3);
-        assert_eq!(solve_packet("04005AC33890".to_string()).solve(), 54);
-        assert_eq!(solve_packet("880086C3E88112".to_string()).solve(), 7);
-        assert_eq!(solve_packet("CE00C43D881120".to_string()).solve(), 9);
-        assert_eq!(solve_packet("D8005AC2A8F0".to_string()).solve(), 1);
-        assert_eq!(solve_packet("F600BC2D8F".to_string()).solve(), 0);
-        assert_eq!(solve_packet("9C005AC2F8F0".to_string()).solve(), 0);
-        assert_eq!(solve_packet("9C0141080250320F1802104A08".to_string()).solve(), 1);
+        let mut packet = solve_packet("C200B40A82".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 3);
+        let mut packet = solve_packet("04005AC33890".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 54);
+        let mut packet = solve_packet("880086C3E88112".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 7);
+        let mut packet = solve_packet("CE00C43D881120".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 9);
+        let mut packet = solve_packet("D8005AC2A8F0".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 1);
+        let mut packet = solve_packet("F600BC2D8F".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 0);
+        let mut packet = solve_packet("9C005AC2F8F0".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 0);
+        let mut packet = solve_packet("9C0141080250320F1802104A08".to_string());
+        packet.solve();
+        assert_eq!(packet.solved_value.unwrap(), 1);
     }
 }
