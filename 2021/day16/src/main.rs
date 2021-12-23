@@ -75,6 +75,7 @@ struct Packet {
     binary: String,
     subpackets: Vec<Packet>,
     value: i64,
+    solved_value: Option<i64>,
 }
 
 impl Packet {
@@ -95,6 +96,7 @@ impl Packet {
                 binary: bin_vec.iter().collect::<String>(),
                 value,
                 subpackets,
+                solved_value: Some(value),
             };
         } else {
             let length_type = bin_vec[ind];
@@ -120,9 +122,6 @@ impl Packet {
                 length = Some(ind)
             }
         }
-        // if ind + 11 < bin_vec.len() {
-        //     subpackets.append(&mut Packet::parse_subpackets(&bin_vec[ind..bin_vec.len()].to_vec()))
-        // }
         Self {
             version,
             p_type,
@@ -130,6 +129,7 @@ impl Packet {
             binary: bin_vec.iter().collect::<String>(),
             value,
             subpackets,
+            solved_value: None,
         }
     }
 
@@ -141,10 +141,6 @@ impl Packet {
                 break;
             }
             let mut packet = Packet::new(&bin_vec[ind..bin_vec.len()].to_vec());
-            packet.length = match packet.length {
-                Some(l) => Some(l),
-                None => None,
-            };
             packets.push(packet.clone());
             match packet.length {
                 Some(length) => ind += length,
@@ -154,10 +150,61 @@ impl Packet {
         packets
     }
 
-    fn sum_values(&self) -> i64 {
-        let mut sum = self.value;
+    fn solve(&mut self) {
         for packet in &self.subpackets {
-            sum += packet.sum_values();
+            packet.solve();
+        }
+        match self.p_type {
+            0 => {
+                self.solved_answer = Some(self.sum_values());
+            }
+            1 => {
+                self.solved_answer = Some(self.multiply_values());
+            }
+            2 => {
+                self.solved_answer = Some(self.subpackets.iter().map(|p| p.value).min().unwrap());
+            }
+            3 => {
+                self.solved_answer = Some(self.subpackets.iter().map(|p| p.value).max().unwrap());
+            }
+            4 => {},
+            5 => {
+                if self.subpackets[0].value > self.subpackets[1].value {
+                    self.solved_answer = Some(1);
+                } else {
+                    self.solved_answer = Some(0);
+                }
+            }
+            6 => {
+                if self.subpackets[0].value < self.subpackets[1].value {
+                    self.solved_answer = Some(1);
+                } else {
+                    self.solved_answer = Some(0);
+                }
+            }
+            7 => {
+                if self.subpackets[0].value == self.subpackets[1].value {
+                    self.solved_answer = Some(1);
+                } else {
+                    self.solved_answer = Some(0);
+                }
+            }
+            _ => panic!("Invalid packet type"),
+        };
+    }
+
+    fn multiply_values(&self) -> i64 {
+        let mut product = 1;
+        for packet in &self.subpackets {
+            product *= packet.value;
+        }
+        product
+    }
+
+    fn sum_values(&self) -> i64 {
+        let mut sum = 0;
+        for packet in &self.subpackets {
+            sum += packet.value;
         }
         sum
     }
@@ -178,7 +225,7 @@ fn solve_packet(input: String) -> Packet {
 
     println!("---------------------------------");
     println!("Input: {}", input);
-    println!("{:#?}", packet);
+    // println!("{:#?}", packet);
     println!("Summed values: {}", packet.sum_values());
     println!("Summed versions: {}", packet.sum_versions());
     println!("---------------------------------");
@@ -186,11 +233,9 @@ fn solve_packet(input: String) -> Packet {
 }
 
 fn solve_part_1(contents: String) {
-    solve_packet(contents.trim().to_string());
-}
-
-fn solve_part_2(contents: String) -> i64 {
-    todo!();
+    let packet = solve_packet(contents.trim().to_string());
+    packet.solve();
+    println!("Part 2: {}", packet.solved_value.unwrap());
 }
 
 #[cfg(test)]
@@ -208,6 +253,13 @@ mod tests {
 
     #[test]
     fn part_2() {
-        // assert_eq!(solve_part_2(aoc::sample()), 0);
+        assert_eq!(solve_packet("C200B40A82".to_string()).solve(), 3);
+        assert_eq!(solve_packet("04005AC33890".to_string()).solve(), 54);
+        assert_eq!(solve_packet("880086C3E88112".to_string()).solve(), 7);
+        assert_eq!(solve_packet("CE00C43D881120".to_string()).solve(), 9);
+        assert_eq!(solve_packet("D8005AC2A8F0".to_string()).solve(), 1);
+        assert_eq!(solve_packet("F600BC2D8F".to_string()).solve(), 0);
+        assert_eq!(solve_packet("9C005AC2F8F0".to_string()).solve(), 0);
+        assert_eq!(solve_packet("9C0141080250320F1802104A08".to_string()).solve(), 1);
     }
 }
