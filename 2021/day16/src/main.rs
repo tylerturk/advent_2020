@@ -154,36 +154,29 @@ impl Packet {
         for packet in self.subpackets.iter_mut() {
             packet.solve();
         }
+
         match self.p_type {
-            0 => {
-                self.solved_value = Some(self.sum_values());
-            }
-            1 => {
-                self.solved_value = Some(self.multiply_values());
-            }
-            2 => {
-                self.solved_value = Some(self.subpackets.iter().map(|p| p.value).min().unwrap());
-            }
-            3 => {
-                self.solved_value = Some(self.subpackets.iter().map(|p| p.value).max().unwrap());
-            }
-            4 => {},
+            0 => self.solved_value = Some(self.sum_values()),
+            1 => self.solved_value = Some(self.multiply_values()),
+            2 => self.solved_value = Some(self.subpackets.iter().map(|p| p.solved_value.unwrap()).min().unwrap()),
+            3 => self.solved_value = Some(self.subpackets.iter().map(|p| p.solved_value.unwrap()).max().unwrap()),
+            4 => self.solved_value = Some(self.value),
             5 => {
-                if self.subpackets[0].value > self.subpackets[1].value {
+                if self.subpackets[0].solved_value.unwrap() > self.subpackets[1].solved_value.unwrap() {
                     self.solved_value = Some(1);
                 } else {
                     self.solved_value = Some(0);
                 }
             }
             6 => {
-                if self.subpackets[0].value < self.subpackets[1].value {
+                if self.subpackets[0].solved_value.unwrap() < self.subpackets[1].solved_value.unwrap() {
                     self.solved_value = Some(1);
                 } else {
                     self.solved_value = Some(0);
                 }
             }
             7 => {
-                if self.subpackets[0].value == self.subpackets[1].value {
+                if self.subpackets[0].solved_value.unwrap() == self.subpackets[1].solved_value.unwrap() {
                     self.solved_value = Some(1);
                 } else {
                     self.solved_value = Some(0);
@@ -193,18 +186,30 @@ impl Packet {
         };
     }
 
-    fn multiply_values(&self) -> i64 {
+    fn multiply_values(&mut self) -> i64 {
         let mut product = 1;
-        for packet in &self.subpackets {
-            product *= packet.value;
+        for packet in self.subpackets.iter_mut() {
+            product *= match packet.solved_value {
+                Some(val) => val,
+                None => {
+                    packet.solve();
+                    packet.solved_value.unwrap()
+                }
+            };
         }
         product
     }
 
-    fn sum_values(&self) -> i64 {
+    fn sum_values(&mut self) -> i64 {
         let mut sum = 0;
-        for packet in &self.subpackets {
-            sum += packet.value;
+        for packet in self.subpackets.iter_mut() {
+            sum += match packet.solved_value {
+                Some(val) => val,
+                None => {
+                    packet.solve();
+                    packet.solved_value.unwrap()
+                }
+            };
         }
         sum
     }
@@ -221,7 +226,7 @@ impl Packet {
 fn solve_packet(input: String) -> Packet {
     let binary = input_to_binary(input.clone());
     let bin_vec = binary.chars().collect::<Vec<char>>();
-    let packet = Packet::new(&bin_vec);
+    let mut packet = Packet::new(&bin_vec);
 
     println!("---------------------------------");
     println!("Input: {}", input);
