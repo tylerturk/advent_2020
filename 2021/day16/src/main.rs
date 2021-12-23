@@ -37,17 +37,17 @@ fn input_to_binary(hex: String) -> String {
     binary.to_string()
 }
 
-fn convert_string_to_binary(binary: &String) -> i32 {
-    i32::from_str_radix(&binary, 2).unwrap()
+fn convert_string_to_binary(binary: &String) -> i64 {
+    i64::from_str_radix(&binary, 2).unwrap()
 }
 
-fn parse_packet_version_and_type(bin_vec: &Vec<char>, ind: usize) -> (i32, i32, usize) {
+fn parse_packet_version_and_type(bin_vec: &Vec<char>, ind: usize) -> (i64, i64, usize) {
     let packet_version = convert_string_to_binary(&bin_vec[ind..ind+3].iter().map(|c| c.to_string()).collect::<String>());
     let packet_type = convert_string_to_binary(&bin_vec[ind+3..ind+6].iter().map(|c| c.to_string()).collect::<String>());
     (packet_version, packet_type, ind + 6)
 }
 
-fn parse_number_from_slice(bin_vec: &Vec<char>, mut ind: usize) -> (i32, usize) {
+fn parse_number_from_slice(bin_vec: &Vec<char>, mut ind: usize) -> (i64, usize) {
     let mut bin_slice: Vec<char> = Vec::new();
     let start = ind;
     loop {
@@ -69,12 +69,12 @@ fn parse_number_from_slice(bin_vec: &Vec<char>, mut ind: usize) -> (i32, usize) 
 
 #[derive(Clone, Debug)]
 struct Packet {
-    version: i32,
-    p_type: i32,
+    version: i64,
+    p_type: i64,
     length: Option<usize>,
     binary: String,
     subpackets: Vec<Packet>,
-    value: i32,
+    value: i64,
 }
 
 impl Packet {
@@ -114,10 +114,10 @@ impl Packet {
                     subpackets.push(packet.clone());
                     match packet.length {
                         Some(length) => ind += length,
-                        //_ => ind += packet.subpackets.iter().map(|p| p.length.unwrap()).sum::<usize>()
                         _ => break,
                     };
                 }
+                length = Some(ind)
             }
         }
         // if ind + 11 < bin_vec.len() {
@@ -154,7 +154,7 @@ impl Packet {
         packets
     }
 
-    fn sum_values(&self) -> i32 {
+    fn sum_values(&self) -> i64 {
         let mut sum = self.value;
         for packet in &self.subpackets {
             sum += packet.sum_values();
@@ -162,7 +162,7 @@ impl Packet {
         sum
     }
 
-    fn sum_versions(&self) -> i32 {
+    fn sum_versions(&self) -> i64 {
         let mut sum = self.version;
         for packet in &self.subpackets {
             sum += packet.sum_versions();
@@ -189,7 +189,7 @@ fn solve_part_1(contents: String) {
     solve_packet(contents.trim().to_string());
 }
 
-fn solve_part_2(contents: String) -> i32 {
+fn solve_part_2(contents: String) -> i64 {
     todo!();
 }
 
