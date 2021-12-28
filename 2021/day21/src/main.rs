@@ -1,9 +1,12 @@
+use cached::proc_macro::cached;
+use cached::UnboundCache;
+
 fn main() {
     println!("Part 1: {}", solve_part_1(aoc::input()));
     println!("Part 2: {}", solve_part_2(aoc::input()));
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Player {
     pos: usize,
     score: usize,
@@ -19,6 +22,9 @@ impl Player {
     }
 
     fn do_move(&mut self, spaces: usize) {
+        if spaces == 0 {
+            return;
+        }
         self.pos = self.pos + spaces;
         if self.pos > 10 {
             self.pos = self.pos % 10;
@@ -79,8 +85,65 @@ fn solve_part_1(contents: String) -> usize {
     players.iter().map(|p| p.score).min().unwrap() * d.rolls
 }
 
-fn solve_part_2(contents: String) -> i32 {
-    todo!();
+#[cached]
+fn dice_gen() -> Vec<usize> {
+    let mut permutations = Vec::new();
+    for d1 in 1..=3 {
+        for d2 in 1..=3 {
+            for d3 in 1..=3 {
+                permutations.push(d1 + d2 + d3);
+            }
+        }
+    }
+    permutations.sort();
+    permutations
+}
+
+#[cached(
+    type = "UnboundCache<String, (i64, i64)>",
+    create = "{ UnboundCache::new() }",
+    convert=r#"{format!("{}{}{}{}{}{}", p1.pos, p1.score, p2.pos, p2.score, spaces, p1s_move)}"#
+)]
+fn recurse_games(p1: &mut Player, p2: &mut Player, spaces: usize, p1s_move: bool) -> (i64, i64) {
+    let win_score = 21;
+    let mut p1_wins: i64 = 0;
+    let mut p2_wins: i64 = 0;
+    let permutations = dice_gen();
+    if spaces != 0 {
+        if p1s_move {
+            p1.do_move(spaces);
+            if p1.score >= win_score {
+                return (1, 0);
+            }
+        } else {
+            p2.do_move(spaces);
+            if p2.score >= win_score {
+                return (0, 1);
+            }
+        }
+    }
+    for m1 in permutations.iter() {
+        let (p1_wins_rec, p2_wins_rec) = recurse_games(&mut p1.clone(), &mut p2.clone(), *m1, !p1s_move);
+        p1_wins += p1_wins_rec;
+        p2_wins += p2_wins_rec;
+    }
+    (p1_wins, p2_wins)
+}
+
+fn solve_part_2(contents: String) -> i64 {
+    let mut players: Vec<Player> = Vec::new();
+    for line in contents.lines() {
+        players.push(Player::new(line));
+    }
+    let mut p2 = players.pop().unwrap();
+    let mut p1 = players.pop().unwrap();
+    let (p1_wins, p2_wins) = recurse_games(&mut p1, &mut p2, 0, false);
+
+    if p1_wins > p2_wins {
+        p1_wins
+    } else {
+        p2_wins
+    }
 }
 
 #[cfg(test)]
@@ -94,6 +157,6 @@ mod tests {
 
     #[test]
     fn part_2() {
-        assert_eq!(solve_part_2(aoc::sample()), 0);
+        assert_eq!(solve_part_2(aoc::sample()), 444356092776315);
     }
 }

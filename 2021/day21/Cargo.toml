@@ -10,3 +10,4 @@ edition = "2018"
 path = "../../aoc"
 
 [dependencies]
+cached = "0.26.2"
