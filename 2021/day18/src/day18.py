@@ -70,7 +70,6 @@ class SnailFishNumber:
             return True
         if isinstance(self.left, SnailFishNumber):
             if self.left.depth == 4:
-                print("LEFT   :", self.to_list())
                 self.root.action_taken = True
                 if isinstance(self.right, int):
                     self.right += self.left.right
@@ -84,7 +83,6 @@ class SnailFishNumber:
                 self.left.explode()
         if not self.root.action_taken and isinstance(self.right, SnailFishNumber):
             if self.right.depth == 4:
-                print("RIGHT  :", self.to_list())
                 self.root.action_taken = True
                 if isinstance(self.left, int):
                     self.left += self.right.left
@@ -120,18 +118,12 @@ class SnailFishNumber:
     def walk_it_down(self, direction, val):
         if direction == "right":
             if isinstance(self.left, SnailFishNumber):
-                if isinstance(self.right, int):
-                    self.right += val
-                else:
-                    self.left.walk_it_down(direction, val)
+                self.left.walk_it_down(direction, val)
             elif isinstance(self.left, int):
                 self.left += val
         if direction == "left":
             if isinstance(self.right, SnailFishNumber):
-                if isinstance(self.left, int):
-                    self.left += val
-                else:
-                    self.right.walk_it_down(direction, val)
+                self.right.walk_it_down(direction, val)
             elif isinstance(self.right, int):
                 self.right += val
 
@@ -171,16 +163,13 @@ class SnailFishNumber:
         return
 
     def reduce(self):
-        print("INITIAL:",self.to_list())
         while True:
             self.explode()
             if self.action_taken:
-                print("EXPLODE:", self.to_list())
                 self.action_taken = False
                 continue
             self.split()
             if self.action_taken:
-                print("SPLIT:  ", self.to_list())
                 self.action_taken = False
                 continue
             if not self.action_taken:
