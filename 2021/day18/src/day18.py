@@ -120,12 +120,18 @@ class SnailFishNumber:
     def walk_it_down(self, direction, val):
         if direction == "right":
             if isinstance(self.left, SnailFishNumber):
-                self.left.walk_it_down(direction, val)
+                if isinstance(self.right, int):
+                    self.right += val
+                else:
+                    self.left.walk_it_down(direction, val)
             elif isinstance(self.left, int):
                 self.left += val
         if direction == "left":
             if isinstance(self.right, SnailFishNumber):
-                self.right.walk_it_down(direction, val)
+                if isinstance(self.left, int):
+                    self.left += val
+                else:
+                    self.right.walk_it_down(direction, val)
             elif isinstance(self.right, int):
                 self.right += val
 
@@ -149,7 +155,7 @@ class SnailFishNumber:
             return
         if isinstance(self.right, SnailFishNumber):
             self.right.split()
-        elif isinstance(self.right, int) and self.right >= 10:
+        elif isinstance(self.right, int) and self.right >= 10 and not self.root.action_taken:
             new_left = int(self.right / 2)
             new_right = new_left + self.right % 2
             self.right = SnailFishNumber(
