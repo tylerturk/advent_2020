@@ -120,7 +120,7 @@ class SnailFishNumber:
                 if isinstance(self.parent.left, int):
                     self.parent.left += val
                 elif isinstance(self.parent.left, SnailFishNumber):
-                    self.parent.right.walk_it_down("left", val)
+                    self.parent.left.walk_it_down("left", val)
 
     def walk_it_down(self, direction, val):
         if direction == "right":
@@ -206,26 +206,6 @@ class SnailFishNumber:
 
 
 def main():
-    # sf = SnailFishNumber.from_list("[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]")
-    # entries = [
-    #     "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]",
-    #     "[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]",
-    #     "[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]",
-    #     "[7,[5,[[3,8],[1,4]]]]",
-    #     "[[2,[2,2]],[8,[8,1]]]",
-    #     "[2,9]",
-    #     "[1,[[[9,3],9],[[9,0],[0,7]]]]",
-    #     "[[[5,[7,4]],7],1]",
-    #     "[[[[4,2],2],6],[8,7]]",
-    # ]
-    # print(sf)
-    # sf.reduce()
-    # for num in entries:
-    #     to_add = SnailFishNumber.from_list(num)
-    #     sf = SnailFishNumber(sf, to_add)
-    #     print(sf)
-    #     sf.reduce()
-    # output = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
     with open("input.txt") as fh:
         sf = None
         entries = list()
@@ -236,7 +216,7 @@ def main():
             else:
                 sf = SnailFishNumber(sf, SnailFishNumber.from_list(line))
                 sf.reduce()
-    print(sf)
+    print(sf.determine_magnitude())
 
 
 if __name__ == "__main__":

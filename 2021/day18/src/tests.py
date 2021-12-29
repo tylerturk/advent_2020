@@ -55,6 +55,14 @@ class TestSnailFish(unittest.TestCase):
         expected = SnailFishNumber.from_list("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
         self.assertEqual(sf, expected)
 
+    def test_solve_2(self):
+        initial = SnailFishNumber.from_list("[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]")
+        to_add = SnailFishNumber.from_list("[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]")
+        expected = SnailFishNumber.from_list("[[[[4,0],[5,4]],[[7,7],[6,0]]],[[8,[7,7]],[[7,9],[5,0]]]]")
+        sf = SnailFishNumber(initial, to_add)
+        sf.reduce()
+        self.assertEqual(sf, expected)
+
     def test_addition_1(self):
         sf1 = SnailFishNumber.from_list("[1,1]")
         sf2 = SnailFishNumber.from_list("[2,2]")
@@ -86,28 +94,28 @@ class TestSnailFish(unittest.TestCase):
         expected = SnailFishNumber.from_list("[[[[3,0],[5,3]],[4,4]],[5,5]]")
         self.assertEqual(final, expected)
 
-    def test_complex(self):
-        sf = SnailFishNumber.from_list("[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]")
-        entries = [
-            "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]",
-            "[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]",
-            "[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]",
-            "[7,[5,[[3,8],[1,4]]]]",
-            "[[2,[2,2]],[8,[8,1]]]",
-            "[2,9]",
-            "[1,[[[9,3],9],[[9,0],[0,7]]]]",
-            "[[[5,[7,4]],7],1]",
-            "[[[[4,2],2],6],[8,7]]"
-        ]
-        for num in entries:
-            to_add = SnailFishNumber.from_list(num)
-            sf = SnailFishNumber(sf, to_add)
-            print("\nIteration: {}".format(sf))
-            sf.reduce()
-            print("\nIteration: {}".format(sf))
-        output = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
-        print("\n{}\n{}\n".format(sf, output))
-        self.assertEqual(sf, output)
+    # def test_complex(self):
+    #     sf = SnailFishNumber.from_list("[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]")
+    #     entries = [
+    #         "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]",
+    #         "[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]",
+    #         "[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]",
+    #         "[7,[5,[[3,8],[1,4]]]]",
+    #         "[[2,[2,2]],[8,[8,1]]]",
+    #         "[2,9]",
+    #         "[1,[[[9,3],9],[[9,0],[0,7]]]]",
+    #         "[[[5,[7,4]],7],1]",
+    #         "[[[[4,2],2],6],[8,7]]"
+    #     ]
+    #     for num in entries:
+    #         to_add = SnailFishNumber.from_list(num)
+    #         print("\n  {}\n+ {}\n= ".format(sf, to_add), end="")
+    #         sf = SnailFishNumber(sf, to_add)
+    #         sf.reduce()
+    #         print("{}".format(sf))
+    #     output = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
+    #     print("\n{}\n{}\n".format(sf, output))
+    #     self.assertEqual(sf, output)
 
     def test_magnitude_1(self):
         sf = SnailFishNumber.from_list("[9,1]")
