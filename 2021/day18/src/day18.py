@@ -62,7 +62,7 @@ class SnailFishNumber:
             self.right.root = root
             self.right.set_parents(root)
 
-    def explode(self, moves_left=0, moves_right=0):
+    def explode(self):
         if self.root.action_taken == True:
             self.root.action_taken = False
             return True
@@ -72,26 +72,41 @@ class SnailFishNumber:
                 self.root.action_taken = True
                 self.right += self.left.right
                 left_val = self.left.left
+                self.try_set_val("left", left_val)
                 self.left = 0
                 return True
             else:
-                exploded = self.left.explode(moves_left=moves_left+1, moves_right=moves_right)
+                exploded = self.left.explode()
         if not exploded and isinstance(self.right, SnailFishNumber):
             if self.right.depth >= 4:
                 self.root.action_taken = True
                 self.left += self.right.left
                 right_val = self.right.right
                 self.right = 0
-                if moves_left == 0:
-                    return True
-                if isinstance(self.root.right, SnailFishNumber):
-                    if isinstance(self.root.right.left, int):
-                        self.root.right.left += right_val
-                elif isinstance(self.root.right, int):
-                    self.root.right += right_val
+                self.try_set_val("right", right_val)
                 return True
             elif not exploded:
-                exploded = self.right.explode(moves_left=moves_left, moves_right=moves_right+1)
+                exploded = self.right.explode()
+
+    def try_set_val(self, direction, val):
+        if self.root == self.parent and self.direction == direction:
+            return
+        if self.direction == direction:
+            if self.parent is None:
+                return
+            self.parent.try_set_val(direction, val)
+        elif direction == "right":
+            if self.parent is not None:
+                if isinstance(self.parent.right, int):
+                    self.parent.right += val
+                elif isinstance(self.parent.right, SnailFishNumber):
+                    self.parent.right.left += val
+        elif direction == "left":
+            if self.parent is not None:
+                if isinstance(self.parent.left, int):
+                    self.parent.left += val
+                elif isinstance(self.parent.left, SnailFishNumber):
+                    self.parent.left.right += val
 
     def split(self):
         if self.root.action_taken == True:
@@ -111,11 +126,11 @@ class SnailFishNumber:
             self.left.parent = self
             self.left.root = self.root
             self.root.action_taken = True
-        elif isinstance(self.right, SnailFishNumber):
+        if isinstance(self.right, SnailFishNumber):
             self.right.split()
         elif isinstance(self.right, int) and self.right >= 10:
             new_left = int(self.right / 2)
-            new_right = new_left + self.left % 2
+            new_right = new_left + self.right % 2
             self.right = SnailFishNumber(
                 depth=self.depth + 1,
                 left=new_left,
@@ -125,21 +140,6 @@ class SnailFishNumber:
             self.right.parent = self
             self.right.root = self.root
         return False
-
-    def step_up(self, count, dir, val):
-        parent = self.parent
-        for i in range(0, count - 1):
-            parent = parent.parent
-        if dir == "right":
-            if isinstance(parent.right, SnailFishNumber):
-                parent.right.left += val
-            elif isinstance(parent.right, int):
-                parent.right += val
-        else:
-            if isinstance(parent.left, SnailFishNumber):
-                parent.left.right += val
-            elif isinstance(parent.left, int):
-                parent.left += val
 
     def to_list(self):
         left = self.left
