@@ -198,17 +198,31 @@ class SnailFishNumber:
 
 
 def main():
+    entries = list()
     with open("input.txt") as fh:
         sf = None
-        entries = list()
         for line in fh.readlines():
+            entries.append(SnailFishNumber.from_list(line))
             if sf is None:
                 sf = SnailFishNumber.from_list(line)
                 sf.reduce()
             else:
                 sf = SnailFishNumber(sf, SnailFishNumber.from_list(line))
                 sf.reduce()
-    print(sf.determine_magnitude())
+    print("Part 1:", sf.determine_magnitude())
+
+    max_magnitude = 0
+    for ind_1, num_1 in enumerate(entries):
+        for ind_2, num_2 in enumerate(entries):
+            if ind_1 == ind_2:
+                continue
+            sf = SnailFishNumber(num_1, num_2)
+            sf.reduce()
+            mag = sf.determine_magnitude()
+            if mag > max_magnitude:
+                max_magnitude = mag
+    print("Part 2:", max_magnitude)
+
 
 
 if __name__ == "__main__":
