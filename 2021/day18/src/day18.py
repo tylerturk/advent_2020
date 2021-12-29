@@ -69,16 +69,13 @@ class SnailFishNumber:
         if self.root.action_taken == True:
             return True
         if isinstance(self.left, SnailFishNumber):
-            if self.left.depth >= 4 and self.left.only_ints():
+            if self.left.depth == 4:
+                print("LEFT   :", self.to_list())
                 self.root.action_taken = True
                 if isinstance(self.right, int):
                     self.right += self.left.right
                 elif isinstance(self.right, SnailFishNumber):
-                    if isinstance(self.right.left, int):
-                        self.right.left += self.left.right
-                    elif isinstance(self.right.left, SnailFishNumber):
-                        self.right.left.walk_it_down("left", self.left.right)
-                        # self.right.left.left += self.left.right
+                    self.right.walk_it_down("right", self.left.right)
                 left_val = self.left.left
                 self.try_set_val("left", left_val)
                 self.left = 0
@@ -86,23 +83,21 @@ class SnailFishNumber:
             else:
                 self.left.explode()
         if not self.root.action_taken and isinstance(self.right, SnailFishNumber):
-            if self.right.depth >= 4 and self.right.only_ints():
+            if self.right.depth == 4:
+                print("RIGHT  :", self.to_list())
                 self.root.action_taken = True
                 if isinstance(self.left, int):
                     self.left += self.right.left
                 elif isinstance(self.left, SnailFishNumber):
-                    self.left.right += self.right.left
+                    self.left.walk_it_down("left", self.right.left)
                 right_val = self.right.right
                 self.right = 0
-                if isinstance(right_val, SnailFishNumber):
-                    print("wtf")
                 self.try_set_val("right", right_val)
                 return True
             else:
                 self.right.explode()
 
     def try_set_val(self, direction, val):
-        # print(val)
         if self.root == self.parent and self.direction == direction:
             return
         if self.direction == direction:
@@ -170,14 +165,18 @@ class SnailFishNumber:
         return
 
     def reduce(self):
+        print("INITIAL:",self.to_list())
         while True:
             action_taken = False
             self.explode()
             if self.action_taken:
+                print("EXPLODE:", self.to_list())
                 action_taken = True
                 self.action_taken = False
+                continue
             self.split()
             if self.action_taken:
+                print("SPLIT:  ", self.to_list())
                 action_taken = True
                 self.action_taken = False
             if not action_taken:
