@@ -1,3 +1,4 @@
+import itertools
 import json
 
 class SnailFishNumber:
@@ -27,6 +28,7 @@ class SnailFishNumber:
         self.depth = 0
         self.direction = None
         self.left = left
+        self.magnitude = None
         self.parent = None
         self.root = None
         self.right = right
@@ -185,16 +187,20 @@ class SnailFishNumber:
         return [left, right]
 
     def determine_magnitude(self):
+        if isinstance(self.left, SnailFishNumber) and self.left.magnitude is not None \
+                and isinstance(self.right, SnailFishNumber) and self.right.magnitude is not None:
+            return self.left.magnitude + self.right.magnitude
         left = self.left if self.left is not None else 0
         if isinstance(self.left, SnailFishNumber):
             left = self.left.determine_magnitude()
         right = self.right if self.right is not None else 0
         if isinstance(self.right, SnailFishNumber):
             right = self.right.determine_magnitude()
+        self.magnitude = left * 3 + right * 2
         return left * 3 + right * 2
 
     def __str__(self):
-        return f"[{self.left},{self.right}]"
+        return f"[{self.left},{self.right},{self.magnitude}]"
 
 
 def main():
@@ -202,7 +208,7 @@ def main():
     with open("input.txt") as fh:
         sf = None
         for line in fh.readlines():
-            entries.append(SnailFishNumber.from_list(line))
+            entries.append(line)
             if sf is None:
                 sf = SnailFishNumber.from_list(line)
                 sf.reduce()
@@ -212,15 +218,14 @@ def main():
     print("Part 1:", sf.determine_magnitude())
 
     max_magnitude = 0
-    for ind_1, num_1 in enumerate(entries):
-        for ind_2, num_2 in enumerate(entries):
-            if ind_1 == ind_2:
-                continue
-            sf = SnailFishNumber(num_1, num_2)
-            sf.reduce()
-            mag = sf.determine_magnitude()
-            if mag > max_magnitude:
-                max_magnitude = mag
+    for [num_1, num_2] in list(itertools.permutations(entries, 2)):
+        sf1 = SnailFishNumber.from_list(num_1)
+        sf2 = SnailFishNumber.from_list(num_2)
+        sf = SnailFishNumber(sf1, sf2)
+        sf.reduce()
+        mag = sf.determine_magnitude()
+        if mag > max_magnitude:
+            max_magnitude = mag
     print("Part 2:", max_magnitude)
 
 
