@@ -167,19 +167,17 @@ class SnailFishNumber:
     def reduce(self):
         print("INITIAL:",self.to_list())
         while True:
-            action_taken = False
             self.explode()
             if self.action_taken:
                 print("EXPLODE:", self.to_list())
-                action_taken = True
                 self.action_taken = False
                 continue
             self.split()
             if self.action_taken:
                 print("SPLIT:  ", self.to_list())
-                action_taken = True
                 self.action_taken = False
-            if not action_taken:
+                continue
+            if not self.action_taken:
                 break
 
     def to_list(self):
