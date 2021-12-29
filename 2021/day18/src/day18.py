@@ -1,30 +1,30 @@
 import json
 
 class SnailFishNumber:
-    def build(d, l, r):
-        depth = d
+    def build(l, r):
         left = None
         right = None
         if isinstance(l, list):
-            left = SnailFishNumber.build(d+1, l[0], l[1])
+            left = SnailFishNumber.build(l[0], l[1])
         else:
             left = l
         if isinstance(r, list):
-            right = SnailFishNumber.build(d+1, r[0], r[1])
+            right = SnailFishNumber.build(r[0], r[1])
         else:
             right = r
-        return SnailFishNumber(depth, left, right)
+        return SnailFishNumber(left, right)
 
     def from_list(text):
         # [[[[[9,8],1],2],3],4]
         data = json.loads(text)
-        sf = SnailFishNumber.build(0, data[0], data[1])
+        sf = SnailFishNumber.build(data[0], data[1])
+        sf.set_depths()
         sf.set_parents()
         return sf
 
-    def __init__(self, depth, left, right):
+    def __init__(self, left, right):
         self.action_taken = False
-        self.depth = depth
+        self.depth = 0
         self.direction = None
         self.left = left
         self.parent = None
@@ -64,31 +64,38 @@ class SnailFishNumber:
 
     def explode(self):
         if self.root.action_taken == True:
-            self.root.action_taken = False
             return True
         exploded = False
         if isinstance(self.left, SnailFishNumber):
-            if self.left.depth == 4:
+            if self.left.depth >= 4:
                 self.root.action_taken = True
-                self.right += self.left.right
+                if isinstance(self.right, int):
+                    self.right += self.left.right
+                elif isinstance(self.right, SnailFishNumber):
+                    self.right.left += self.left.right
                 left_val = self.left.left
                 self.try_set_val("left", left_val)
                 self.left = 0
                 return True
             else:
-                exploded = self.left.explode()
-        if not exploded and isinstance(self.right, SnailFishNumber):
+                self.left.explode()
+        if not self.root.action_taken and isinstance(self.right, SnailFishNumber):
             if self.right.depth >= 4:
                 self.root.action_taken = True
-                self.left += self.right.left
+                if isinstance(self.left, int):
+                    self.left += self.right.left
+                elif isinstance(self.left, SnailFishNumber):
+                    self.left.right += self.right.left
                 right_val = self.right.right
                 self.right = 0
                 self.try_set_val("right", right_val)
                 return True
             elif not exploded:
-                exploded = self.right.explode()
+
+                self.right.explode()
 
     def try_set_val(self, direction, val):
+        # print(val)
         if self.root == self.parent and self.direction == direction:
             return
         if self.direction == direction:
@@ -96,50 +103,72 @@ class SnailFishNumber:
                 return
             self.parent.try_set_val(direction, val)
         elif direction == "right":
-            if self.parent is not None:
+            if self.parent is not None and self.parent.right is not None:
                 if isinstance(self.parent.right, int):
                     self.parent.right += val
                 elif isinstance(self.parent.right, SnailFishNumber):
-                    self.parent.right.left += val
+                    if isinstance(self.parent.right.left, int):
+                        self.parent.right.left += val
+                    else:
+                        self.parent.right.left.left += val
         elif direction == "left":
-            if self.parent is not None:
+            if self.parent is not None and self.parent.left is not None:
                 if isinstance(self.parent.left, int):
                     self.parent.left += val
                 elif isinstance(self.parent.left, SnailFishNumber):
-                    self.parent.left.right += val
+                    if isinstance(self.parent.left.right, int):
+                        self.parent.left.right += val
+                    else:
+                        self.parent.left.right.right += val
 
     def split(self):
         if self.root.action_taken == True:
-            self.root.action_taken = False
-            return True
+            return
         if isinstance(self.left, SnailFishNumber):
             self.left.split()
         elif isinstance(self.left, int) and self.left >= 10:
             new_left = int(self.left / 2)
             new_right = new_left + self.left % 2
             self.left = SnailFishNumber(
-                depth=self.depth + 1,
                 left=new_left,
                 right=new_right,
             )
             self.left.direction = "left"
             self.left.parent = self
             self.left.root = self.root
+            self.set_depths()
             self.root.action_taken = True
+            return
         if isinstance(self.right, SnailFishNumber):
             self.right.split()
         elif isinstance(self.right, int) and self.right >= 10:
             new_left = int(self.right / 2)
             new_right = new_left + self.right % 2
             self.right = SnailFishNumber(
-                depth=self.depth + 1,
                 left=new_left,
                 right=new_right,
             )
             self.right.direction = "right"
             self.right.parent = self
+            self.set_depths()
             self.right.root = self.root
-        return False
+            self.root.action_taken = True
+            return
+        return
+
+    def reduce(self):
+        while True:
+            action_taken = False
+            self.explode()
+            if self.action_taken:
+                action_taken = True
+                self.action_taken = False
+            self.split()
+            if self.action_taken:
+                action_taken = True
+                self.action_taken = False
+            if not action_taken:
+                break
 
     def to_list(self):
         left = self.left
@@ -150,12 +179,51 @@ class SnailFishNumber:
             right = self.right.to_list()
         return [left, right]
 
+    def determine_magnitude(self):
+        left = self.left if self.left is not None else 0
+        if isinstance(self.left, SnailFishNumber):
+            left = self.left.determine_magnitude()
+        right = self.right if self.right is not None else 0
+        if isinstance(self.right, SnailFishNumber):
+            right = self.right.determine_magnitude()
+        return left * 3 + right * 2
+
     def __str__(self):
         return f"[{self.left}, {self.right}]"
 
 
 def main():
-    pass
+    # sf = SnailFishNumber.from_list("[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]")
+    # entries = [
+    #     "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]",
+    #     "[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]",
+    #     "[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]",
+    #     "[7,[5,[[3,8],[1,4]]]]",
+    #     "[[2,[2,2]],[8,[8,1]]]",
+    #     "[2,9]",
+    #     "[1,[[[9,3],9],[[9,0],[0,7]]]]",
+    #     "[[[5,[7,4]],7],1]",
+    #     "[[[[4,2],2],6],[8,7]]",
+    # ]
+    # print(sf)
+    # sf.reduce()
+    # for num in entries:
+    #     to_add = SnailFishNumber.from_list(num)
+    #     sf = SnailFishNumber(sf, to_add)
+    #     print(sf)
+    #     sf.reduce()
+    # output = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
+    with open("input.txt") as fh:
+        sf = None
+        entries = list()
+        for line in fh.readlines():
+            if sf is None:
+                sf = SnailFishNumber.from_list(line)
+                sf.reduce()
+            else:
+                sf = SnailFishNumber(sf, SnailFishNumber.from_list(line))
+                sf.reduce()
+    print(sf)
 
 
 if __name__ == "__main__":

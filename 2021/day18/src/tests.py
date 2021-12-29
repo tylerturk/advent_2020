@@ -48,16 +48,78 @@ class TestSnailFish(unittest.TestCase):
     def test_solve(self):
         sf1 = SnailFishNumber.from_list("[[[[4,3],4],4],[7,[[8,4],9]]]")
         sf2 = SnailFishNumber.from_list("[1,1]")
-        sf = SnailFishNumber(0, sf1, sf2)
+        sf = SnailFishNumber(sf1, sf2)
         sf.set_depths()
         sf.set_parents()
-        for _ in range(1, 20):
-            exploded = sf.explode()
-            was_split = sf.split()
-            sf.root.action_taken = False
+        sf.reduce()
         expected = SnailFishNumber.from_list("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]")
-
         self.assertEqual(sf, expected)
 
+    def test_addition_1(self):
+        sf1 = SnailFishNumber.from_list("[1,1]")
+        sf2 = SnailFishNumber.from_list("[2,2]")
+        sf3 = SnailFishNumber.from_list("[3,3]")
+        sf4 = SnailFishNumber.from_list("[4,4]")
+        first = SnailFishNumber(sf1, sf2)
+        first.reduce()
+        second = SnailFishNumber(first, sf3)
+        second.reduce()
+        final = SnailFishNumber(second, sf4)
+        final.reduce()
+        expected = SnailFishNumber.from_list("[[[[1,1],[2,2]],[3,3]],[4,4]]")
+        self.assertEqual(final, expected)
+
+    def test_addition_2(self):
+        sf1 = SnailFishNumber.from_list("[1,1]")
+        sf2 = SnailFishNumber.from_list("[2,2]")
+        sf3 = SnailFishNumber.from_list("[3,3]")
+        sf4 = SnailFishNumber.from_list("[4,4]")
+        sf5 = SnailFishNumber.from_list("[5,5]")
+        first = SnailFishNumber(sf1, sf2)
+        first.reduce()
+        second = SnailFishNumber(first, sf3)
+        second.reduce()
+        third = SnailFishNumber(second, sf4)
+        third.reduce()
+        final = SnailFishNumber(third, sf5)
+        final.reduce()
+        expected = SnailFishNumber.from_list("[[[[3,0],[5,3]],[4,4]],[5,5]]")
+        self.assertEqual(final, expected)
+
+    def test_complex(self):
+        sf = SnailFishNumber.from_list("[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]")
+        entries = [
+            "[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]",
+            "[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]",
+            "[[[[2,4],7],[6,[0,5]]],[[[6,8],[2,8]],[[2,1],[4,5]]]]",
+            "[7,[5,[[3,8],[1,4]]]]",
+            "[[2,[2,2]],[8,[8,1]]]",
+            "[2,9]",
+            "[1,[[[9,3],9],[[9,0],[0,7]]]]",
+            "[[[5,[7,4]],7],1]",
+            "[[[[4,2],2],6],[8,7]]",
+        ]
+        for num in entries:
+            to_add = SnailFishNumber.from_list(num)
+            sf = SnailFishNumber(sf, to_add)
+            sf.reduce()
+        output = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
+        self.assertEqual(sf, output)
+
+    def test_magnitude_1(self):
+        sf = SnailFishNumber.from_list("[9,1]")
+        self.assertEqual(sf.determine_magnitude(), 29)
+
+    def test_magnitude_2(self):
+        sf = SnailFishNumber.from_list("[[9,1],[1,9]]")
+        self.assertEqual(sf.determine_magnitude(), 129)
+
+    def test_magnitude_3(self):
+        sf = SnailFishNumber.from_list("[[1,2],[[3,4],5]]")
+        self.assertEqual(sf.determine_magnitude(), 143)
+
+    def complex_magnitude(self):
+        sf = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
+        self.assertEqual(sf.determine_magnitude(), 3488)
 
 unittest.main()
