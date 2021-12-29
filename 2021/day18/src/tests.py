@@ -69,6 +69,8 @@ class TestSnailFish(unittest.TestCase):
         expected = SnailFishNumber.from_list("[[[[7,7],[7,8]],[[9,5],[8,7]]],[[[6,8],[0,8]],[[9,9],[9,0]]]]")
         sf = SnailFishNumber(initial, to_add)
         sf.reduce()
+        print("\nACTUAL: {}\nEXPECT: {}\n".format(sf, output))
+
         self.assertEqual(sf, expected)
 
     def test_addition_1(self):
@@ -122,7 +124,6 @@ class TestSnailFish(unittest.TestCase):
             sf.reduce()
             print("{}".format(sf))
         output = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
-        print("\n{}\n{}\n".format(sf, output))
         self.assertEqual(sf, output)
 
     def test_magnitude_1(self):

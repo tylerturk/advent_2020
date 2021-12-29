@@ -201,7 +201,7 @@ class SnailFishNumber:
         return left * 3 + right * 2
 
     def __str__(self):
-        return f"[{self.left}, {self.right}]"
+        return f"[{self.left},{self.right}]"
 
 
 def main():
