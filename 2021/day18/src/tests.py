@@ -97,13 +97,16 @@ class TestSnailFish(unittest.TestCase):
             "[2,9]",
             "[1,[[[9,3],9],[[9,0],[0,7]]]]",
             "[[[5,[7,4]],7],1]",
-            "[[[[4,2],2],6],[8,7]]",
+            "[[[[4,2],2],6],[8,7]]"
         ]
         for num in entries:
             to_add = SnailFishNumber.from_list(num)
             sf = SnailFishNumber(sf, to_add)
+            print("\nIteration: {}".format(sf))
             sf.reduce()
+            print("\nIteration: {}".format(sf))
         output = SnailFishNumber.from_list("[[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]")
+        print("\n{}\n{}\n".format(sf, output))
         self.assertEqual(sf, output)
 
     def test_magnitude_1(self):
