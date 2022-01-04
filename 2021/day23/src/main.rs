@@ -3,7 +3,7 @@ use cached::UnboundCache;
 
 fn main() {
     println!("Part 1: {}", solve_part_1(aoc::input()));
-    println!("Part 2: {}", solve_part_2(aoc::input()));
+    println!("Part 2: {}", solve_part_1(aoc::read_file("input2.txt")));
 }
 
 fn load_map(contents: String) -> Vec<Vec<char>> {
@@ -214,10 +214,6 @@ fn solve_part_1(contents: String) -> i64 {
     -1
 }
 
-fn solve_part_2(contents: String) -> i32 {
-    todo!();
-}
-
 fn pos_for_caching(pos: Option<(usize, usize)>, ind: usize) -> usize {
     if pos.is_none() {
         0
@@ -397,6 +393,6 @@ mod tests {
 
     #[test]
     fn part_2() {
-        assert_eq!(solve_part_2(aoc::sample()), 0);
+        assert_eq!(solve_part_1(aoc::read_file("sample2.txt")), 44169);
     }
 }
