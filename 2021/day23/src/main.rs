@@ -1,3 +1,6 @@
+use cached::proc_macro::cached;
+use cached::UnboundCache;
+
 fn main() {
     println!("Part 1: {}", solve_part_1(aoc::input()));
     println!("Part 2: {}", solve_part_2(aoc::input()));
@@ -48,9 +51,12 @@ fn safe_to_go_home_pos(grid: &Vec<Vec<char>>, color: &char) -> Option<(usize, us
         if grid[y][x] != '#' && &grid[y][x] != color && grid[y][x] != '.' {
             return None;
         }
-        if first_y_pos == 0 && &grid[y][x] == color {
+        if first_y_pos == 0 && (&grid[y][x] == color || &grid[y][x] == &'#') {
             first_y_pos = y - 1;
         }
+    }
+    if first_y_pos == 0 {
+        return None;
     }
     Some((first_y_pos, x))
 }
@@ -107,13 +113,13 @@ fn determine_eligible_move_candidates(grid: &Vec<Vec<char>>) -> Vec<(usize, usiz
         if amphipods.contains(color) {
             let target = safe_to_go_home_pos(&grid, color);
             if target.is_none() {
-                println!("No safe spot found for {},{}", 1, ind);
                 continue;
             }
             let target = target.unwrap();
             let valid = has_valid_path(&grid, (1, ind), target);
             if valid {
                 eligible.push((1, ind));
+            } else {
             }
         }
     }
@@ -129,13 +135,28 @@ fn determine_eligible_move_candidates(grid: &Vec<Vec<char>>) -> Vec<(usize, usiz
             continue;
         }
         for y in 2..grid.len() {
-            if amphipods.contains(&grid[y][x]) && !amphipod_is_solved(&grid, &color_column(x)) {
+            if amphipods.contains(&grid[y][x])
+                && !amphipod_is_home(&grid, &grid[y][x], x, y)
+                && !amphipod_is_solved(&grid, &color_column(x))
+            {
                 eligible.push((y, x));
                 break;
             }
         }
     }
     eligible
+}
+
+fn amphipod_is_home(grid: &Vec<Vec<char>>, color: &char, x: usize, y: usize) -> bool {
+    if home_column(color) != x {
+        return false;
+    }
+    for next_y in y..grid.len() - 1 {
+        if &grid[next_y][x] != color {
+            return false;
+        }
+    }
+    true
 }
 
 fn amphipod_is_solved(grid: &Vec<Vec<char>>, color: &char) -> bool {
@@ -172,8 +193,7 @@ fn determine_possible_moves(grid: &Vec<Vec<char>>, loc: (usize, usize)) -> Vec<(
         if !valid {
             return Vec::new();
         }
-        let loc_and_cost = (target.0, target.1);
-        possible_locs.push(loc_and_cost);
+        possible_locs.push((target.0, target.1));
     } else {
         for hallway_location in hallway_locations {
             let valid = has_valid_path(grid, loc, hallway_location);
@@ -198,6 +218,18 @@ fn solve_part_2(contents: String) -> i32 {
     todo!();
 }
 
+fn pos_for_caching(pos: Option<(usize, usize)>, ind: usize) -> usize {
+    if pos.is_none() {
+        0
+    } else {
+        match ind {
+            0 => pos.unwrap().0,
+            1 => pos.unwrap().1,
+            _ => 0,
+        }
+    }
+}
+
 fn print_grid(grid: &Vec<Vec<char>>) {
     for (y, _) in grid.iter().enumerate() {
         for (x, _) in grid[y].iter().enumerate() {
@@ -207,61 +239,47 @@ fn print_grid(grid: &Vec<Vec<char>>) {
     }
 }
 
+#[cached(
+    type = "UnboundCache<String, Option<i64>>",
+    create = "{ UnboundCache::new() }",
+    convert = r#"{format!("{:?}{}{}{}{}", grid, pos_for_caching(start, 0), pos_for_caching(start, 1), pos_for_caching(target, 0), pos_for_caching(target, 1))}"#
+)]
 fn solve(
-    grid: &Vec<Vec<char>>,
+    grid: &mut Vec<Vec<char>>,
     start: Option<(usize, usize)>,
     target: Option<(usize, usize)>,
     depth: i32,
 ) -> Option<i64> {
-    println!("\n\nIteration {}", depth);
-    print_grid(&grid);
     let mut cost = 0;
-    let mut new_grid: Vec<Vec<char>> = Vec::new();
-    for (y, _) in grid.iter().enumerate() {
-        new_grid.push(grid[y].iter().map(|c| c.clone()).collect());
-    }
 
     if start.is_some() && target.is_some() {
         let start = start.unwrap();
         let target = target.unwrap();
         cost += determine_move_cost(&grid[start.0][start.1], start, target);
         // Necessary to avoid second let statement
-        new_grid[target.0][target.1] = grid[start.0][start.1];
-        new_grid[start.0][start.1] = '.';
+        grid[target.0][target.1] = grid[start.0][start.1];
+        grid[start.0][start.1] = '.';
     }
     if is_solved(&grid) {
-        println!("Solved with cost {}", cost);
         return Some(cost);
     }
     let candidates = determine_eligible_move_candidates(&grid);
     if candidates.is_empty() {
-        println!("Exiting because candidates have no valid options");
         return None;
     }
     let mut costs: Vec<i64> = Vec::new();
-    for candidate in candidates.clone().iter() {
+    for candidate in candidates.iter() {
         let moves = determine_possible_moves(&grid, *candidate);
-        for (i, m) in moves.clone().iter().enumerate() {
-            println!(
-                "Depth {}, iteration {}, Calling solve on {:?} -> {:?} ",
-                depth, i, candidate, m
-            );
-            let ans = solve(&new_grid, Some(*candidate), Some(*m), depth + 1);
+        for m in moves.iter() {
+            let ans = solve(&mut grid.clone(), Some(*candidate), Some(*m), depth + 1);
             if ans.is_some() {
                 costs.push(ans.unwrap());
             }
-            // match solve(
-            //     &new_grid.clone(),
-            //     Some(candidate.clone()),
-            //     Some(m.clone()),
-            //     depth + 1,
-            // ) {
-            //     Some(val) => costs.push(val),
-            //     None => println!("Unable to solve with {:?} going to {:?}", candidate, m,),
-            // };
         }
     }
-    print_grid(&grid);
+    if costs.is_empty() {
+        return None;
+    }
     Some(costs.iter().min().unwrap() + cost)
 }
 
@@ -286,6 +304,15 @@ mod tests {
         let grid = load_map(aoc::read_file("extra_inputs/sample_a_cannot_move.txt"));
         let eligible = determine_eligible_move_candidates(&grid);
         let mut expected = vec![(2, 5), (2, 7), (3, 9)];
+        expected.sort();
+        assert_eq!(eligible, expected);
+    }
+
+    #[test]
+    fn test_eligible_as() {
+        let grid = load_map(aoc::read_file("extra_inputs/only_as.txt"));
+        let eligible = determine_eligible_move_candidates(&grid);
+        let mut expected = vec![(1, 2), (1, 4)];
         expected.sort();
         assert_eq!(eligible, expected);
     }
@@ -322,7 +349,6 @@ mod tests {
         let grid = load_map(aoc::read_file("extra_inputs/almost_solved.txt"));
         let candidates = determine_eligible_move_candidates(&grid);
         assert_eq!(candidates, vec![(1, 10)]);
-        let moves = determine_possible_moves(&grid, (1, 10));
     }
 
     #[test]
@@ -343,8 +369,30 @@ mod tests {
     }
 
     #[test]
+    fn solve_simple() {
+        let res = solve(
+            &mut load_map(aoc::read_file("extra_inputs/simple.txt")),
+            None,
+            None,
+            0,
+        );
+        assert_eq!(res.unwrap(), 4622);
+    }
+
+    #[test]
+    fn solve_harder() {
+        let res = solve(
+            &mut load_map(aoc::read_file("extra_inputs/harder.txt")),
+            None,
+            None,
+            0,
+        );
+        assert_eq!(res.unwrap(), 4605);
+    }
+
+    #[test]
     fn part_1() {
-        assert_eq!(solve_part_1(aoc::sample()), 11332);
+        assert_eq!(solve_part_1(aoc::sample()), 12521);
     }
 
     #[test]
