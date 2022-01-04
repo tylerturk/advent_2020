@@ -1,5 +1,6 @@
 use std::cmp;
 use std::collections::HashMap;
+use std::fmt;
 
 fn main() {
     println!("Part 1: {}", solve_part_1(aoc::input()));
@@ -7,95 +8,33 @@ fn main() {
 }
 
 fn solve_part_1(contents: String) -> usize {
-    let mut cubes: HashMap<String, bool> = HashMap::new();
+    let mut cubes: Vec<Cube> = Vec::new();
+    let part_1 = Cube::part_1();
     for line in contents.lines() {
-        let mut line_bits = line.split_whitespace();
-        let op = if line_bits.next().unwrap() == "on" {
-            true
-        } else {
-            false
-        };
-
-        let loc = line_bits.next().unwrap();
-        let mut loc_bits = loc.split(",");
-        let mut x_bits = loc_bits.next().unwrap().split("..");
-        let mut x_start: i32 = x_bits
-            .next()
-            .unwrap()
-            .replace("x=", "")
-            .parse::<i32>()
-            .unwrap();
-        if x_start < -50 {
-            x_start = -50;
-        }
-        let mut x_end: i32 = x_bits.next().unwrap().parse::<i32>().unwrap();
-        if x_end > 50 {
-            x_end = 50;
-        }
-        let mut y_bits = loc_bits.next().unwrap().split("..");
-        let mut y_start: i32 = y_bits
-            .next()
-            .unwrap()
-            .replace("y=", "")
-            .parse::<i32>()
-            .unwrap();
-        if y_start < -50 {
-            y_start = -50;
-        }
-        let mut y_end: i32 = y_bits.next().unwrap().parse::<i32>().unwrap();
-        if y_end > 50 {
-            y_end = 50;
-        }
-        let mut z_bits = loc_bits.next().unwrap().split("..");
-        let mut z_start: i32 = z_bits
-            .next()
-            .unwrap()
-            .replace("z=", "")
-            .parse::<i32>()
-            .unwrap();
-        if z_start < -50 {
-            z_start = -50;
-        }
-        let mut z_end: i32 = z_bits.next().unwrap().parse::<i32>().unwrap();
-        if z_end > 50 {
-            z_end = 50;
-        }
-        if x_start > 50 || x_end < -50 || y_start > 50 || y_end < -50 || z_start > 50 || z_end < -50
-        {
+        let tmp_cube = Cube::new(line);
+        let cube = part_1.intersection(&tmp_cube);
+        if cube.is_none() {
             continue;
         }
-        for x in x_start..=x_end {
-            for y in y_start..=y_end {
-                for z in z_start..=z_end {
-                    cubes.insert(format!("{},{},{}", x, y, z), op);
-                }
-            }
+        let mut cube = cube.unwrap();
+        cube.on = tmp_cube.on;
+        cubes.push(cube);
+    }
+    let mut unique: usize = 0;
+    for (ind, cube) in cubes.iter().enumerate() {
+        if cube.on {
+            let remaining_cubes = cubes
+                .iter()
+                .skip(ind + 1)
+                .map(|c| c.clone())
+                .collect::<Vec<Cube>>();
+            unique += cube.determine_unique_volume(&remaining_cubes);
         }
     }
-    cubes.values().filter(|c| **c).count()
-    // let mut cubes: Vec<Cube> = Vec::new();
-    // let part_1 = Cube::part_1();
-    // for (ind, line) in contents.lines().enumerate() {
-    //     let mut cube = part_1.intersection(&Cube::new(line));
-    //     if cube.is_none() {
-    //         continue;
-    //     }
-    //     let cube = cube.unwrap();
-    //     cube.print();
-    //     cubes.push(cube);
-    // }
-    // let mut other_cubes = cubes.clone();
-    // let mut unique: usize = 0;
-    // for (ind, cube) in cubes.iter_mut().rev().enumerate() {
-    //     if cube.on {
-    //         unique += cube.determine_unique_volume(&mut other_cubes);
-    //     }
-    // }
-    // unique
-    // cubes.iter().filter(|c| c.on).map(|c| c.determine_unique_volume()).sum()
+    unique
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 struct Cube {
     on: bool,
     x: std::ops::Range<i32>,
@@ -150,20 +89,16 @@ impl Cube {
     }
 
     fn part_1() -> Self {
+        let x = -50..51;
+        let y = -50..51;
+        let z = -50..51;
         Self {
             on: false,
-            x: -50..51,
-            y: -50..51,
-            z: -50..51,
-            size: 100 * 100 * 100,
+            size: x.len() * y.len() * z.len(),
+            x,
+            y,
+            z,
         }
-    }
-
-    fn print(&self) {
-        println!(
-            "Cube: x{}..{}, y{}..{}, z{}..{}",
-            self.x.start, self.x.end, self.y.start, self.y.end, self.z.start, self.z.end
-        )
     }
 
     fn intersection(&self, other: &Cube) -> Option<Self> {
@@ -176,10 +111,9 @@ impl Cube {
         if x_start > x_end || y_start > y_end || z_start > z_end {
             return None;
         }
-        let x = x_start..x_end + 1;
-        let y = y_start..y_end + 1;
-        let z = z_start..z_end + 1;
-        println!("Intersection between these two (x:{}..{},y:{}..{},z:{}..{})  (x:{}..{},y:{}..{},z:{}..{}) is  (x:{}..{},y:{}..{},z:{}..{})", self.x.start, self.x.end, self.y.start, self.y.end, self.z.start, self.z.end, other.x.start, other.x.end, other.y.start, other.y.end, other.z.start, other.z.end, x.start, x.end, y.start, y.end, z.start, z.end);
+        let x = x_start..x_end;
+        let y = y_start..y_end;
+        let z = z_start..z_end;
         Some(Self {
             on: true,
             size: x.len() * y.len() * z.len(),
@@ -189,43 +123,59 @@ impl Cube {
         })
     }
 
-    fn determine_unique_volume(&mut self, others: &mut Vec<Cube>) -> usize {
+    fn determine_unique_volume(&self, others: &Vec<Cube>) -> usize {
         let mut intersecting: Vec<Cube> = Vec::new();
-        for other in others.iter_mut() {
+        for other in others.iter() {
             let intersection = self.intersection(other);
             if intersection.is_none() {
                 continue;
             }
-            intersecting.push(other.clone());
+            intersecting.push(intersection.unwrap());
         }
-        let mut unique_size = self.size;
-        let intersecting_dupe = intersecting.clone();
-        for (ind, other) in intersecting.iter_mut().enumerate() {
-            let mut dupe = intersecting_dupe.clone();
-            let mut others = dupe
+
+        if intersecting.is_empty() {
+            return self.size;
+        }
+        let mut other_intersection_sizes: usize = 0;
+        for (ind, other) in intersecting.iter().enumerate() {
+            let others = intersecting
                 .iter()
                 .skip(ind + 1)
                 .map(|c| c.clone())
                 .collect::<Vec<Cube>>();
-            unique_size -= other.determine_unique_volume(&mut others);
+            other_intersection_sizes += other.determine_unique_volume(&others);
         }
-        unique_size
+        self.size - other_intersection_sizes
+    }
+}
+
+impl fmt::Display for Cube {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Cube: x{}..{}, y{}..{}, z{}..{}",
+            self.x.start, self.x.end, self.y.start, self.y.end, self.z.start, self.z.end
+        )
     }
 }
 
 fn solve_part_2(contents: String) -> usize {
     let mut cubes: Vec<Cube> = Vec::new();
-    for (ind, line) in contents.lines().enumerate() {
+    for line in contents.lines() {
         cubes.push(Cube::new(line));
     }
-    let other_cubes = cubes.clone();
-    for (ind, cube) in cubes.iter_mut().enumerate() {
-        let others = other_cubes.iter().skip(ind + 1);
-        for other in others {
-            // cube.remove_volume(other);
+    let mut unique: usize = 0;
+    for (ind, cube) in cubes.iter().enumerate() {
+        if cube.on {
+            let remaining_cubes = cubes
+                .iter()
+                .skip(ind + 1)
+                .map(|c| c.clone())
+                .collect::<Vec<Cube>>();
+            unique += cube.determine_unique_volume(&remaining_cubes);
         }
     }
-    cubes.iter().filter(|c| c.on).map(|c| c.size).sum()
+    unique
 }
 
 #[cfg(test)]
@@ -243,5 +193,33 @@ mod tests {
             solve_part_2(aoc::read_file("sample2.txt")),
             2758514936282235
         );
+    }
+
+    #[test]
+    fn test_volume() {
+        let line = "on x=1..1,y=1..1,z=1..1";
+        let c1 = Cube::new(line);
+        assert_eq!(c1.size, 1);
+
+        let line = "on x=-1..1,y=-1..1,z=-1..1";
+        let c2 = Cube::new(line);
+        assert_eq!(c2.size, 27);
+
+        assert_eq!(c2.determine_unique_volume(&vec![c1.clone()]), 26);
+
+        let c1_c2 = c2.intersection(&c1);
+        assert_eq!(c1_c2.is_some(), true);
+
+        let line = "on x=-2..3,y=-2..3,z=-2..3";
+        let c3 = Cube::new(line);
+        assert_eq!(c3.size, 216);
+
+        let c2_c3 = c2.intersection(&c3);
+        assert_eq!(c2_c3.unwrap().size, 27);
+    }
+
+    #[test]
+    fn test_simple() {
+        assert_eq!(solve_part_1(aoc::read_file("simple.txt")), 26);
     }
 }
