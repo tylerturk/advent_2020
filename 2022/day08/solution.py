@@ -92,12 +92,9 @@ def part1(file_name="input.txt"):
 
 def search_north(map, x, start_y):
     distance = 0
-    highest = 0
     start_height = map[x][start_y]["v"]
     for y in range(start_y - 1, -1, -1):
-        if map[x][y]["v"] >= highest:
-            highest = map[x][y]["v"]
-            distance = start_y - y
+        distance = start_y - y
         if map[x][y]["v"] >= start_height:
             break
     return distance
@@ -106,12 +103,9 @@ def search_north(map, x, start_y):
 def search_south(map, x, start_y):
     y_len = len(map[0])
     distance = 0
-    highest = 0
     start_height = map[x][start_y]["v"]
     for y in range(start_y + 1, y_len):
-        if map[x][y]["v"] >= highest:
-            highest = map[x][y]["v"]
-            distance = y - start_y
+        distance = y - start_y
         if map[x][y]["v"] >= start_height:
             break
     return distance
@@ -119,12 +113,9 @@ def search_south(map, x, start_y):
 
 def search_east(map, start_x, y):
     distance = 0
-    highest = 0
     start_height = map[start_x][y]["v"]
     for x in range(start_x - 1, -1, -1):
-        if map[x][y]["v"] >= highest:
-            highest = map[x][y]["v"]
-            distance = start_x - x
+        distance = start_x - x
         if map[x][y]["v"] >= start_height:
             break
     return distance
@@ -133,14 +124,12 @@ def search_east(map, start_x, y):
 def search_west(map, start_x, y):
     x_len = len(map)
     distance = 0
-    highest = 0
     start_height = map[start_x][y]["v"]
     for x in range(start_x + 1, x_len):
-        if map[x][y]["v"] >= highest:
-            highest = map[x][y]["v"]
-            distance = x - start_x
+        distance = x - start_x
         if map[x][y]["v"] >= start_height:
             break
+    
     return distance
 
 
